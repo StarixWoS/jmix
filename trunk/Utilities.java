@@ -37,12 +37,13 @@ public class Utilities {
 			java.net.NetworkInterface ni = java.net.NetworkInterface.getByInetAddress(address);
 			host = System.getProperty("os.arch") + "-" + ni.getDisplayName();
 			byte[] mac = ni.getHardwareAddress();
-			adminID = getHexString(mac).substring(4).toUpperCase();
+			//adminID = getHexString(mac).substring(4).toUpperCase();
 		} catch (Exception e) {
 			host = System.getProperty("os.arch");
-			adminID = "FFFFFF";
+			//adminID = "FFFFFF";
 		}
 		
+		adminID = createAdminID();
 	}
 	
 	// Function from: http://rgagnon.com/javadetails/java-0596.html
@@ -54,6 +55,30 @@ public class Utilities {
 		  }
 		  return result;
 		}
+	
+	// I believe this is what the actual server uses when generating a new ID.
+	// Should find where it saves it to on Win, or save the one we generate on *nix
+	public static String createAdminID() {
+		java.util.Random test = new java.util.Random(System.currentTimeMillis());
+		int id = test.nextInt();
+		id = id << 4;
+		id = id ^ test.nextInt();
+		id = id << 4;
+		
+		int temp = test.nextInt();
+		temp = temp << 10;
+		
+		id = id ^ temp;
+		
+		id = id ^ test.nextInt();
+		id = id << 4;
+		temp = test.nextInt();
+		temp = temp << 10;
+		id = id ^ temp;
+		
+		id = id ^ test.nextInt();
+		return Integer.toHexString(id).toUpperCase();
+	}
 	
 	public static String stripLeadingZeroes(String s) {
 		while (s.startsWith("0")) {
@@ -123,15 +148,39 @@ public class Utilities {
 	}
 	
 	public static void loadSSVs(String world) {
-		// TODO load the SSV list for the world name given (when world changes, or a new world server added)
+		Logger logger = JMIX.getLogger();
+		logger.log(Level.INFO, "Loading SSVs for world " + world);
+		
+		try {
+			FileInputStream fis = new FileInputStream("worlds" + System.getProperty("file.separator") + world + ".dat");
+			ObjectInputStream ois = new ObjectInputStream(fis);
+			SSVList.put(world, (SSVWorld) ois.readObject());
+			ois.close();
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public static void unloadSSVs(String world) {
-		// TODO unload the SSV list for the world name given (when last person leaves world, free memory)
+		Logger logger = JMIX.getLogger();
+		logger.log(Level.INFO, "Unloading SSVs for world " + world);
+		SSVList.remove(world);
 	}
 	
 	public static void saveSSVs(String world) {
-		// TODO save the SSV list for the world name given (when changes occur)
+		Logger logger = JMIX.getLogger();
+		logger.log(Level.INFO, "Saving SSVs for world " + world);
+		
+		try { 
+			FileOutputStream fos = new FileOutputStream("worlds" + System.getProperty("file.separator") + world + ".dat");
+			ObjectOutputStream oos = new ObjectOutputStream(fos);
+			oos.writeObject(SSVList.get(world));
+			oos.close();
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public static String getSSV(String world, String cat, String var) {
@@ -190,7 +239,8 @@ public class Utilities {
 			while ((line = br.readLine()) != null) {
 				if (line.startsWith("[") && line.endsWith("]")) {
 					section = line.substring(1, line.length() - 1);
-				} else if (section.equals("MIX")) {
+				}
+				if (section.equals("MIX")) {
 					if (line.startsWith("currVersion=")){
 						if (!versionA.equals(line.substring(12))) {
 							allowPublic = false;
