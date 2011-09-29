@@ -149,8 +149,8 @@ public class ClientHandler extends IoHandlerAdapter {
 	
 	public void exceptionCaught(IoSession session, Throwable t) throws Exception {
 		logger.log(Level.INFO, "Session closed");
-		t.printStackTrace();
 		Player player = null;
+		t.printStackTrace();
 		if (session.containsAttribute("player")) {
 			player = (Player) session.getAttribute("player");
 			logger.log(Level.INFO, "Soul ID " + player.getSerNum() + " disconnected");
