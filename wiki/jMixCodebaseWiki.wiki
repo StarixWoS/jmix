@@ -1,0 +1,14 @@
+#summary Open source Java based MIX server for private or commercial use.
+#labels Featured
+
+= Introduction =
+
+Welcome to the jMix codebase wiki! This is a resource of all you'd ever need to know about jMix features.
+
+
+= Details =
+
+Add your content here.  Format your content with:
+  * Text in *bold* or _italic_
+  * Headings, paragraphs, and lists
+  * Automatic links to other wiki pages
