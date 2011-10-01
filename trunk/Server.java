@@ -22,7 +22,7 @@ import org.apache.mina.transport.socket.nio.SocketAcceptor;
 import org.apache.mina.transport.socket.nio.SocketAcceptorConfig;
 
 
-public class Server {
+public class Server implements Runnable {
 	public MainGUI gui;
 	private Logger logger;
 	
@@ -32,6 +32,17 @@ public class Server {
 	
 	private Map<String, Player> playerList;
 	
+	private int[] usageLast5Min;
+	private int[] usageLast20Min;
+	private int[] usageLast1Hour;
+	private int[] usageLast1Day;
+	private int minPassed;
+	private int min5Passed;
+	private int min20Passed;
+	private int hourPassed;
+	private final long usageUpdateInterval = 1000*60;
+	private Thread usageTimer;
+	
 	private ServerConfiguration config;
 	
 	public Server(ServerConfiguration c) {
@@ -40,6 +51,24 @@ public class Server {
 		
 		// Create a HashMap to store a list of players;
         playerList = new HashMap<String, Player>();
+        
+        minPassed = 0;
+        min5Passed = 0;
+        min20Passed = 0;
+        hourPassed = 0;
+        
+        usageLast5Min = new int[5];
+        for (int i = 0; i < 5; i++)
+        	usageLast5Min[i] = 0;
+        usageLast20Min = new int[4];
+        for (int i = 0; i < 4; i++)
+        	usageLast20Min[i] = 0;
+        usageLast1Hour = new int[3];
+        for (int i = 0; i < 3; i++)
+        	usageLast1Hour[i] = 0;
+        usageLast1Day = new int[24];
+        for (int i = 0; i < 24; i++)
+        	usageLast1Day[i] = 0;
 		
         // Set server configuration
         config = c;
@@ -66,6 +95,9 @@ public class Server {
         if (config.isGUI) {
         	gui = new MainGUI();
         }
+        
+        // Begin updating usage statistics
+        usageTimer = new Thread(this);
         
 		JMIX.getLogger().log(Level.INFO, "Startup complete.");
 	}
@@ -192,15 +224,53 @@ public class Server {
 	}
 	
 	public int getUsage20Min() {
-		return 0;
+		int usage = 0;
+		for (int i = 0; i < 4; i++) // To get 20 minute history, add up the 5 minute histories
+			usage += usageLast20Min[i];
+		
+		if (usage == 0) { // If no 20 minute history is available yet, use the last 5 minutes
+			for (int i = 0; i < 5; i++)
+				usage += usageLast5Min[i];
+		}
+		return usage;
 	}
 	
 	public int getUsage1Hr() {
-		return 0;
+		int usage = 0;
+		
+		for (int i = 0; i < 3; i++) // To get 1 hour history, add up the 20 minute histories
+			usage += usageLast1Hour[i];
+		
+		if (usage == 0)
+			for (int i = 0; i < 4; i++) // If no 1 hour history yet, use the last 20 minutes
+				usage += usageLast20Min[i];
+		
+		if (usage == 0)  // If no 20 minute history is available yet, use the last 5 minutes
+			for (int i = 0; i < 5; i++)
+				usage += usageLast5Min[i];
+		
+		return usage;
 	}
 	
 	public int getUsage1Day() {
-		return 0;
+		int usage = 0;
+		
+		for (int i = 0; i < 24; i++)
+			usage += usageLast1Day[i];
+		
+		if (usage == 0)
+			for (int i = 0; i < 3; i++) // If no day history yet, use hourly history
+				usage += usageLast1Hour[i];
+		
+		if (usage == 0)
+			for (int i = 0; i < 4; i++) // If no 1 hour history yet, use the last 20 minutes
+				usage += usageLast20Min[i];
+		
+		if (usage == 0)  // If no 20 minute history is available yet, use the last 5 minutes
+			for (int i = 0; i < 5; i++)
+				usage += usageLast5Min[i];
+		
+		return usage;
 	}
 	
 	/**
@@ -210,6 +280,7 @@ public class Server {
 	 */
 	public void addPlayer(String serNum, Player player) {
 		playerList.put(serNum, player);
+		usageLast5Min[0] = playerList.size();
 	}
 	
 	/**
@@ -289,5 +360,60 @@ public class Server {
 				s = s + Utilities.stripLeadingZeroes(playerList.get(serNum).getSerNum()) + "=" + playerList.get(serNum).getRandHex() + ",";
 		}
 		return s;
+	}
+
+	@Override
+	public void run() {
+		int sum;
+		while(true) {
+			try {
+				Thread.sleep(usageUpdateInterval);
+				minPassed++; // Every minute, we update our count and shift the history of minutes by 1
+				for (int i = 4; i > 0; i++)
+					usageLast5Min[i] = usageLast5Min[i-1];
+				
+				if (minPassed == 5) { // Every 5 minutes, update our shorter history
+					minPassed = 0;
+					for (int i = 3; i > 0; i++)
+						usageLast20Min[i] = usageLast20Min[i-1];
+					
+					sum = 0;
+					for (int i = 0; i < 5; i++)
+						sum += usageLast5Min[i];
+					usageLast20Min[0] = sum;
+					
+					min5Passed++;
+					if (min5Passed == 4) { // Every 20 minutes, update our 20 minute history
+						min5Passed = 0;
+						for (int i = 2; i > 0; i++)
+							usageLast1Hour[i] = usageLast1Hour[i-1];
+						
+						sum = 0;
+						for (int i = 0; i < 4; i++)
+							sum += usageLast20Min[i];
+						usageLast1Hour[0] = sum;
+						
+						min20Passed++;
+						if (min20Passed == 3) { // Every hour, update our hourly history
+							min20Passed = 0;
+							for (int i = 24; i > 0; i++)
+								usageLast1Day[i] = usageLast1Day[i-1];
+							
+							sum = 0;
+							for (int i = 0; i < 2; i++)
+								sum += usageLast1Hour[i];
+							usageLast1Day[0] = sum;
+							
+							hourPassed++;
+							if (hourPassed == 24) {
+								hourPassed = 0;
+							}
+						}
+					}
+				}
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 }
