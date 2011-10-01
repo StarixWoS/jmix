@@ -25,7 +25,7 @@ public class Server {
 	public int port = 2222;
 	public String serverName = "MIX Server 22";
 	public String motd = "Welcome to this server";
-	public String rules = "ladder=1, noBleep,maxp=20,maxAFK=15,world=Evergreen, minV=A91,arenaPK=1";
+	public String rules = "ladder=1, noBleep, maxp=20, maxAFK=15, world=Evergreen, minV=A91,arenaPK=1";
 	public String password = "";
 	public String publicIP;
 	public int publicPort;
