@@ -37,7 +37,7 @@ public class JMIX {
 			// Log and use default values
 		}
 		
-		server = new Server();
+		server = new Server(new ServerConfiguration());
 	}
 	
 	private static void initLogger() {

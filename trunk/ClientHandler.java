@@ -129,7 +129,7 @@ public class ClientHandler extends IoHandlerAdapter {
 			((SocketSessionConfig) session.getConfig())
 			.setReceiveBufferSize(2048);
 		// 2048, 8192
-		server.sendServerMessageTo(session, server.getMOTD());
+		server.sendServerMessageTo(session, server.getServerConfig().motd);
 		server.sendServerRules(session);
 		session.setIdleTime(IdleStatus.BOTH_IDLE, 10);
 	}

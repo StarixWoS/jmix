@@ -1,4 +1,8 @@
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -22,64 +26,48 @@ public class Server {
 	public MainGUI gui;
 	private Logger logger;
 	
-	public int port = 2222;
-	public String serverName = "MIX Server 22";
-	public String motd = "Welcome to this server";
-	public String rules = "ladder=1, noBleep, maxp=20, maxAFK=15, world=Evergreen, minV=A91,arenaPK=1";
-	public String password = "";
-	public String publicIP;
-	public int publicPort;
-	public String playerWorld = "";
-	public boolean publicServer = true;
-	
-	private boolean isGUI = true;
-	private boolean autoListen = true;
-	private boolean autoPublic = true;
-	private boolean fetchPublic = true;
-	private String game = "WoS";
-	private String url = "http://synthetic-reality.com";
-	
 	private CheckInTimer checkinTimer;
 	
 	private DatagramAcceptor UDPacceptor;
 	
 	private Map<String, Player> playerList;
 	
-	public Server() {
-		// TODO Check command line arguments
-		
+	private ServerConfiguration config;
+	
+	public Server(ServerConfiguration c) {
 		// Initialize the logger
 		logger = JMIX.getLogger();
 		
 		// Create a HashMap to store a list of players;
         playerList = new HashMap<String, Player>();
 		
+        // Set server configuration
+        config = c;
+        
 		// Start listening TCP and UDP sockets
-		if (autoListen) {
+		if (config.autoListen) {
 			start();
 		}
 		
 		// Fetch master server address and port
-		if (fetchPublic) {
-			Utilities.updateMaster(game);
+		if (config.fetchPublic) {
+			Utilities.updateMaster(config.game);
 		}
 		
 		// Check-In with the master server if we are allowed
 		if (Utilities.allowPublic()) {
-			if (autoPublic) {
+			if (config.autoPublic) {
 				masterCheckIn();
 				checkinTimer = new CheckInTimer(this);
 				checkinTimer.start();
 			}
 		}
 	
-        if (isGUI) {
+        if (config.isGUI) {
         	gui = new MainGUI();
         }
         
 		JMIX.getLogger().log(Level.INFO, "Startup complete.");
-		
-		
 	}
 	
 	/**
@@ -104,7 +92,7 @@ public class Server {
         cfg.getFilterChain().addLast("codec", new ProtocolCodecFilter( new WoSCodecFactory() ));
 
         try {
-			acceptor.bind( new InetSocketAddress(port), new ClientHandler(this), cfg);
+			acceptor.bind( new InetSocketAddress(config.port), new ClientHandler(this), cfg);
         } catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -122,7 +110,7 @@ public class Server {
         //chain.addLast("logger", new LoggingFilter());
         
         try {
-			UDPacceptor.bind(new InetSocketAddress(port), new UDPHandler(this));
+			UDPacceptor.bind(new InetSocketAddress(config.port), new UDPHandler(this));
         } catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -138,16 +126,16 @@ public class Server {
 		DatagramConnector connector = new DatagramConnector();
         //ConnectFuture connFuture = connector.connect(new InetSocketAddress(MASTER_ADDRESS, MASTER_PORT), new UDPMasterHandler(server));
 		//ConnectFuture connFuture = connector.connect(new InetSocketAddress(MASTER_ADDRESS, MASTER_PORT), new InetSocketAddress(PORT), new UDPMasterHandler(server));
-        IoSession session = UDPacceptor.newSession(new InetSocketAddress(Utilities.getMasterAddress(game), Utilities.getMasterPort(game)), new InetSocketAddress(port));
+        IoSession session = UDPacceptor.newSession(new InetSocketAddress(Utilities.getMasterAddress(config.game), Utilities.getMasterPort(config.game)), new InetSocketAddress(config.port));
         String sendData = "!version=" + Utilities.getVersionNumMIX() + "" +
         				",nump=" + getPlayerCount() + 
-        				",gameid= " + Utilities.getGameID(game) +
-        				",game=" + game + 
+        				",gameid= " + Utilities.getGameID(config.game) +
+        				",game=" + config.game + 
         				",host=" + Utilities.getHost() + 
         				",id=" + Utilities.getAdminID() + 
-        				",port=" + port + 
+        				",port=" + config.port + 
         				",info=" +
-        				",name=" + getName();
+        				",name=" + config.serverName;
         int capacity = sendData.length() + 1;
         ByteBuffer buffer = ByteBuffer.allocate(capacity, false);
         buffer.put(sendData.getBytes(Charset.forName("us-ascii")));
@@ -183,7 +171,7 @@ public class Server {
 		if (UDPacceptor == null)
 			startUDP();
 		DatagramConnector connector = new DatagramConnector();
-        IoSession session = UDPacceptor.newSession(new InetSocketAddress(Utilities.getMasterAddress(game), Utilities.getMasterPort(game)), new InetSocketAddress(port));
+        IoSession session = UDPacceptor.newSession(new InetSocketAddress(Utilities.getMasterAddress(config.game), Utilities.getMasterPort(config.game)), new InetSocketAddress(config.port));
         int capacity = 2;
         ByteBuffer buffer = ByteBuffer.allocate(capacity, false);
         buffer.put((byte) 58);
@@ -195,28 +183,8 @@ public class Server {
         logger.log(Level.INFO, "Checking-Out from Master");
 	}
 	
-	public void setMOTD(String motd) {
-		this.motd = motd;
-	}
-	
-	public String getMOTD() {
-		return motd;
-	}
-	
-	public void setRules(String rules) {
-		this.rules = rules;
-	}
-	
-	public String getRules() {
-		return rules;
-	}
-	
-	public void setName(String serverName) {
-		this.serverName = serverName;
-	}
-	
-	public String getName() {
-		return serverName;
+	public ServerConfiguration getServerConfig() {
+		return config;
 	}
 	
 	public int getPlayerCount() {
@@ -233,38 +201,6 @@ public class Server {
 	
 	public int getUsage1Day() {
 		return 0;
-	}
-	
-	public void setPublicIP(String ip) {
-		publicIP = ip;
-	}
-	
-	public String getPublicIP() {
-		return publicIP;
-	}
-	
-	public void setPublicPort(int publicPort) {
-		this.publicPort = publicPort;
-	}
-	
-	public int getPublicPort() {
-		return publicPort;
-	}
-	
-	public void setPlayerWorld(String playerWorld) {
-		this.playerWorld = playerWorld;
-	}
-	
-	public String getPlayerWorld() {
-		return playerWorld;
-	}
-	
-	public boolean isPublic() {
-		return publicServer;
-	}
-	
-	public void setPublic(boolean b) {
-		publicServer = b;
 	}
 	
 	/**
@@ -334,7 +270,7 @@ public class Server {
 	}
 	
 	public void sendServerRules(IoSession session) {
-		session.write(":SR$" + getRules());
+		session.write(":SR$" + config.rules);
 	}
 	
 	public String getSerNumList() {
