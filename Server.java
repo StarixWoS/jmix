@@ -159,6 +159,8 @@ public class Server implements Runnable {
         //ConnectFuture connFuture = connector.connect(new InetSocketAddress(MASTER_ADDRESS, MASTER_PORT), new UDPMasterHandler(server));
 		//ConnectFuture connFuture = connector.connect(new InetSocketAddress(MASTER_ADDRESS, MASTER_PORT), new InetSocketAddress(PORT), new UDPMasterHandler(server));
         IoSession session = UDPacceptor.newSession(new InetSocketAddress(Utilities.getMasterAddress(config.game), Utilities.getMasterPort(config.game)), new InetSocketAddress(config.port));
+        // If !! is checked, the port number the server is set to run on is sent
+        // If !! is not checked, the port number sent is 0
         String sendData = "!version=" + Utilities.getVersionNumMIX() + "" +
         				",nump=" + getPlayerCount() + 
         				",gameid= " + Utilities.getGameID(config.game) +
@@ -281,6 +283,9 @@ public class Server implements Runnable {
 	public void addPlayer(String serNum, Player player) {
 		playerList.put(serNum, player);
 		usageLast5Min[0] = playerList.size();
+		
+		if (config.publicServer) // update the player count the master server has for us
+			masterCheckIn();
 	}
 	
 	/**

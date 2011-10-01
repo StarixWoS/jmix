@@ -162,7 +162,6 @@ public class Utilities {
 	}
 	
 	public static int getGameID(String game) {
-		// TODO make sure these game IDs are correct
 		if (game.equals("WoS"))
 			return 0;
 		else if (game.equals("W97"))

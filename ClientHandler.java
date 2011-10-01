@@ -78,7 +78,7 @@ public class ClientHandler extends IoHandlerAdapter {
 					// Send list of online players to me
 					server.sendTo(player.getSerNum(), ":SR@I" + server.getIntroPacketFor(player.getSerNum()));
 					// Send my introduction to everyone
-					server.sendAll(":SR@I" + player.getRandHex() + ",");
+					server.sendAll(":SR@I" + Utilities.stripLeadingZeroes(player.getSerNum()) + "=" + player.getRandHex() + ",");
 					//server.sendAllExcept(player.getSerNum(), ":SR?" + player.getSerNum());
 				}
 			}
