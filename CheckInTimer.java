@@ -10,7 +10,7 @@ public class CheckInTimer extends Thread {
 	
 	@Override
 	public void run() {
-		while(server.isPublic()) {
+		while(server.getServerConfig().publicServer) {
 			try {
 				sleep(checkInTimer);
 			} catch (InterruptedException e) {
