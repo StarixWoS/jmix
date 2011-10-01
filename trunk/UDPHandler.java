@@ -123,8 +123,8 @@ public class UDPHandler extends IoHandlerAdapter {
 			Utilities.savePlayerInfo(newPlayer);
 			
 			// Send our info in reply
-			String response = "#name=" + server.getName() + 
-								" //Rules: " + server.getRules() + 
+			String response = "#name=" + server.getServerConfig().serverName + 
+								" //Rules: " + server.getServerConfig().rules + 
 								" //ID:" + Utilities.getAdminID() + 
 								" //TM:" + Utilities.getTimeHex().toUpperCase() + 
 								" //US:" + server.getUsage20Min() + "." +
@@ -149,7 +149,7 @@ public class UDPHandler extends IoHandlerAdapter {
 			logger.log(Level.INFO, "Sent Packet: " + response);
 		// Apparently a player wants to tell us what world they selected (if no world in server rules?)
 		} else if (msg.substring(0,1).equals("G")) {
-			server.setPlayerWorld(msg.substring(1));
+			server.getServerConfig().playerWorld = msg.substring(1);
 		// The MIX Master is telling us our public ip and port
 		} else if (msg.substring(0,1).equals("M")) {
 			// TODO take this info out of the packet and put in a format we can use
