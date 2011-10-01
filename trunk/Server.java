@@ -77,7 +77,9 @@ public class Server {
         	gui = new MainGUI();
         }
         
-		JMIX.getLogger().log(Level.INFO, "Startup complete.");	
+		JMIX.getLogger().log(Level.INFO, "Startup complete.");
+		
+		
 	}
 	
 	/**

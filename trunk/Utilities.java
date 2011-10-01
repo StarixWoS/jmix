@@ -85,11 +85,11 @@ public class Utilities {
 			}
 			
 		}
-		else if (System.getProperty("os.name").contains("Windows") && (new File("C:\\WoS\\preferences.ini")).isFile())
+		else if (System.getProperty("os.name").contains("Windows") && (new File("C:\\WoS\\MIX\\preferences.ini")).isFile())
 		{
 			try {
 				String line, section = null;
-				BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream("C:\\WoS\\preferences.ini")));
+				BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream("C:\\WoS\\MIX\\preferences.ini")));
 				
 				while ((line = br.readLine()) != null) {
 					if (line.startsWith("[") && line.endsWith("]")) {
