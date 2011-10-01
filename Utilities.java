@@ -1,11 +1,15 @@
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.URL;
 import java.net.UnknownHostException;
@@ -19,31 +23,101 @@ public class Utilities {
 	private static final String updateMasterURL = "http://synthetic-reality.com/synreal.ini";
 	private static final String versionA = "1.10";
 	private static final int version = 41252;
+	
 	private static Map<String, String> MASTER_ADDRESS = new HashMap<String,String>();
 	private static Map<String, Integer> MASTER_PORT = new HashMap<String, Integer>();
 	private static boolean allowPublic = true;
 	// os.arch/name/version user.name
-	private static String host = System.getProperty("os.arch");
-	private static String adminID = "76193DEA";
+	private static String host = "HP Basement";
+	private static String adminID = "FFFFFFFF";
 	public static Map<String, SSVWorld> SSVList;
 	
 	static {
+		// Initialize default values
+		
+		// Default master server values for Synthetic-Reality games
+		// Well of Souls
 		MASTER_ADDRESS.put("WoS", "63.197.64.78");
 		MASTER_PORT.put("WoS", 23999);
+		// Warpath
+		MASTER_ADDRESS.put("W97", "63.197.64.78");
+		MASTER_PORT.put("W97", 22999);
+		// Arcadia
+		MASTER_ADDRESS.put("TOY", "63.197.64.78");
+		MASTER_PORT.put("TOY", 21999);
+		// Rocket Club
+		MASTER_ADDRESS.put("RC", "63.197.64.78");
+		MASTER_PORT.put("RC", 20999);
 		
-		java.net.InetAddress address;
-		try {
-			address = java.net.InetAddress.getLocalHost();
-			java.net.NetworkInterface ni = java.net.NetworkInterface.getByInetAddress(address);
-			host = System.getProperty("os.arch") + "-" + ni.getDisplayName();
-			byte[] mac = ni.getHardwareAddress();
-			//adminID = getHexString(mac).substring(4).toUpperCase();
-		} catch (Exception e) {
-			host = System.getProperty("os.arch");
-			//adminID = "FFFFFF";
+		// Get the host name
+		if (System.getProperty("os.name").contains("Windows") && System.getenv("COMPUTERNAME") != null)
+		{
+			host = System.getenv("COMPUTERNAME");
+		}
+		else
+		{
+			try {
+				host = InetAddress.getLocalHost().getHostName();
+			} catch (Exception e) {
+				host = "HP Basement";
+			}
 		}
 		
+		// Try to load the server id from our config file
+		// (Windows only) If that fails, see if we can read it from the MIX config file on the computer
+		// If all else fails, then the generated one will be used
 		adminID = createAdminID();
+		if ((new File("." + System.getProperty("file.separator")  + "computerInfo.cfg")).isFile())
+		{
+			// Load default values from the config file
+			try {
+				String line;
+				BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream("." + System.getProperty("file.separator")  + "computerInfo.cfg")));
+				
+				while ((line = br.readLine()) != null) {
+					if (line.startsWith("serverID=")) {
+						adminID = line.substring(9);
+						System.out.println("Read adminID from computerInfo.cfg");
+					}
+				}
+			} catch (Exception e) {
+				adminID = createAdminID();
+			}
+			
+		}
+		else if (System.getProperty("os.name").contains("Windows") && (new File("C:\\WoS\\preferences.ini")).isFile())
+		{
+			try {
+				String line, section = null;
+				BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream("C:\\WoS\\preferences.ini")));
+				
+				while ((line = br.readLine()) != null) {
+					if (line.startsWith("[") && line.endsWith("]")) {
+						section = line.substring(1, line.length() - 1);
+					}
+					if (section.equals("options")) {
+						if (line.startsWith("extension=")) {
+							adminID = Integer.toHexString(Integer.parseInt(line.substring(10))).toUpperCase();
+							System.out.println("Read adminID from preferences.ini");
+						}
+					}
+				} 
+			} catch (Exception e) {
+				adminID = createAdminID();
+			}
+		}
+		System.out.println("adminID = " + adminID);
+		System.out.println("host = " + host);
+		
+		// save the settings
+		try {
+			BufferedWriter bw = new BufferedWriter(new FileWriter("." + System.getProperty("file.separator")  + "computerInfo.cfg"));
+			bw.write("serverID=" + adminID);
+			bw.newLine();
+			bw.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	// Function from: http://rgagnon.com/javadetails/java-0596.html

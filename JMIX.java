@@ -16,6 +16,9 @@ public class JMIX {
 	private static Logger logger;
 	
 	public static void main (String[] args) throws IOException {
+		System.out.println(System.getenv());
+		System.getProperties().list(System.out);
+		
 		initLogger();
 		
 		// Create command line options
