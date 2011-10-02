@@ -365,7 +365,7 @@ public class Server implements Runnable {
 		String s = "";
 		for (String serNum : playerList.keySet()) {
 			if (!serNum.equals(me))
-				s = s + Utilities.stripLeadingZeroes(playerList.get(serNum).getSerNum()) + "=" + playerList.get(serNum).getRandHex() + ",";
+				s = s + Utilities.stripLeadingZeroes(playerList.get(serNum).getSerNum()) + "=" + Utilities.IPList.get(serNum) + ",";
 		}
 		return s;
 	}
@@ -373,10 +373,7 @@ public class Server implements Runnable {
 	public String getIntroPacket() {
 		String s = "";
 		for (String serNum : playerList.keySet()) {
-			if (!playerList.get(serNum).isRandHex()) {
-				playerList.get(serNum).initRandHex();
-			}
-				s = s + Utilities.stripLeadingZeroes(playerList.get(serNum).getSerNum()) + "=" + playerList.get(serNum).getRandHex() + ",";
+				s = s + Utilities.stripLeadingZeroes(playerList.get(serNum).getSerNum()) + "=" + Utilities.IPList.get(serNum) + ",";
 		}
 		return s;
 	}

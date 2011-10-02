@@ -32,6 +32,8 @@ public class Utilities {
 	private static String adminID = "FFFFFFFF";
 	public static Map<String, SSVWorld> SSVList;
 	
+	public static Map<String, String> IPList;
+	
 	static {
 		// Initialize default values
 		
@@ -48,6 +50,8 @@ public class Utilities {
 		// Rocket Club
 		MASTER_ADDRESS.put("RC", "63.197.64.78");
 		MASTER_PORT.put("RC", 20999);
+		
+		IPList = new HashMap<String, String>();
 		
 		// Get the host name
 		if (System.getProperty("os.name").contains("Windows") && System.getenv("COMPUTERNAME") != null)
@@ -129,6 +133,20 @@ public class Utilities {
 		  }
 		  return result;
 		}
+	
+	public static String encodedIPAddress(String ip) {
+		String[] ipBytes;
+		System.out.println(ip);
+		ip = ip.substring(1, ip.indexOf(":"));
+		ipBytes = ip.split("[.]");
+		int[] ipAddr = new int[4];
+		ipAddr[0] = Integer.parseInt(ipBytes[0]) ^ 0x43;
+		ipAddr[1] = Integer.parseInt(ipBytes[1]) ^ 0x65;
+		ipAddr[2] = Integer.parseInt(ipBytes[2]) ^ 0x87;
+		ipAddr[3] = Integer.parseInt(ipBytes[3]) ^ 0xA9;
+		ip = Integer.toHexString(ipAddr[3]) + Integer.toHexString(ipAddr[2]) + Integer.toHexString(ipAddr[1]) + Integer.toHexString(ipAddr[0]);
+		return ip.toUpperCase();
+	}
 	
 	// I believe this is what the actual server uses when generating a new ID.
 	// Should find where it saves it to on Win, or save the one we generate on *nix

@@ -56,7 +56,8 @@ public class ClientHandler extends IoHandlerAdapter {
 		} else {
 			//Sign-in the player with the server, otherwise ignore them
 			if (msg.startsWith("?")) {
-				String firstPlayer = server.getFirstPlayer();
+				//String firstPlayer = server.getIntroPacket();
+				//firstPlayer = firstPlayer.substring(5, firstPlayer.indexOf("="));
 				String serNum = msg.substring(1, msg.length());
 				if (serNum.length() < 8)
 					while (serNum.length() < 8)
@@ -73,15 +74,13 @@ public class ClientHandler extends IoHandlerAdapter {
 					server.addPlayer(player.getSerNum(), player);
 					// Send :SR? packet to all players - prob not needed... try skipping sending to all
 					// Send :SR!000009A11500000AEA to at least 1st player. Right after 9A1 is a number(player number to use?)
-					if (!player.isRandHex())
-						player.initRandHex();
 					
 					// :SR?63FD0466
 					server.sendAllExcept(player.getSerNum(), ":SR" + msg);
 
 					// :SR!63FD04660B000006FE
-					if (firstPlayer != null)
-						server.sendAll(":SR!" + player.getSerNum() + Utilities.padToLength(Integer.toHexString(server.getPlayerCount()), 2) + firstPlayer);
+					//if (firstPlayer != null)
+					//	server.sendAll(":SR!" + player.getSerNum() + Utilities.padToLength(Integer.toHexString(server.getPlayerCount()), 2) + firstPlayer);
 					
 					/* Need to figure out how this works; player list with random id's seems to always
 					 * get sent first thing, before player even fully connects. Doesn't seem to need to
