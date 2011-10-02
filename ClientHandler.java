@@ -117,6 +117,8 @@ public class ClientHandler extends IoHandlerAdapter {
 			// TODO ID 8(quite possibly requesting the var): <worldName>,<catName>,<varName>, ?
 			// TODO 9 - <world name>,<section name>,<variable name>,<string> ?
 			// TODO :SR@V<sernum_that_changed_it><worldName>,<sectionName>,<variableName>,<value> ?
+			
+			// TODO to see what things like mix 3 do, connect to a real server and see if the Well scene stuff gets sent to everyone (or if that is just on this server)
 			if (msg.startsWith(":MIX4")) {
 				// Next packet goes to the specified soul id
 				player.setWhisperSerNum(msg.substring(7, 15));
@@ -132,6 +134,8 @@ public class ClientHandler extends IoHandlerAdapter {
 				logger.log(Level.INFO, "[ADMIN]pass=" + admincmd[0] + " cmd=" + admincmd[1] + " target=" + admincmd[2] + " msg=" + admincmd[3]);
 			} else if (msg.startsWith(":MIX8")) {
 				server.sendTo(player.getSerNum(), Utilities.getSSV("world", "cat", "var"));
+			} else if (msg.startsWith(":MIX9")) {
+				Utilities.setSSV("world", "cat", "var", "hi");
 			}
 		}
 	}
@@ -143,9 +147,18 @@ public class ClientHandler extends IoHandlerAdapter {
 			((SocketSessionConfig) session.getConfig())
 			.setReceiveBufferSize(2048);
 		// 2048, 8192
+		if (server.getServerConfig().isMaxPlayerSet()) {
+			if (server.getPlayerCount() >= server.getServerConfig().getMaxPlayers()) {
+				server.sendServerMessageTo(session, "Sorry, the server is full!");
+				session.close();
+			}
+		}
 		server.sendServerMessageTo(session, server.getServerConfig().motd);
 		server.sendTo(session, ":SR@I" + server.getIntroPacket());
 		server.sendServerRules(session);
+		if (!server.getServerConfig().isWorldSet()) {
+			session.write(":SR$world=" + server.getServerConfig().playerWorld);
+		}
 		session.setIdleTime(IdleStatus.BOTH_IDLE, 10);
 	}
 	
