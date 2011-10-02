@@ -329,6 +329,9 @@ public class Server implements Runnable {
 		playerList.get(serNum).getIoSession().write(msg);
 	}
 	
+	public void sendTo(IoSession session, String msg) {
+		session.write(msg);
+	}
 	
 	public void sendServerMessage(String msg) {
 		sendAll(":SR@M" + msg);
@@ -365,6 +368,24 @@ public class Server implements Runnable {
 				s = s + Utilities.stripLeadingZeroes(playerList.get(serNum).getSerNum()) + "=" + playerList.get(serNum).getRandHex() + ",";
 		}
 		return s;
+	}
+	
+	public String getIntroPacket() {
+		String s = "";
+		for (String serNum : playerList.keySet()) {
+			if (!playerList.get(serNum).isRandHex()) {
+				playerList.get(serNum).initRandHex();
+			}
+				s = s + Utilities.stripLeadingZeroes(playerList.get(serNum).getSerNum()) + "=" + playerList.get(serNum).getRandHex() + ",";
+		}
+		return s;
+	}
+	
+	public String getFirstPlayer() {
+		for (String serNum : playerList.keySet()) {
+			return playerList.get(serNum).getSerNum();
+		}
+		return null;
 	}
 
 	@Override

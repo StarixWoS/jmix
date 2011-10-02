@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -55,6 +56,7 @@ public class ClientHandler extends IoHandlerAdapter {
 		} else {
 			//Sign-in the player with the server, otherwise ignore them
 			if (msg.startsWith("?")) {
+				String firstPlayer = server.getFirstPlayer();
 				String serNum = msg.substring(1, msg.length());
 				if (serNum.length() < 8)
 					while (serNum.length() < 8)
@@ -73,6 +75,18 @@ public class ClientHandler extends IoHandlerAdapter {
 					// Send :SR!000009A11500000AEA to at least 1st player. Right after 9A1 is a number(player number to use?)
 					if (!player.isRandHex())
 						player.initRandHex();
+					
+					// :SR?63FD0466
+					server.sendAllExcept(player.getSerNum(), ":SR" + msg);
+
+					// :SR!63FD04660B000006FE
+					if (firstPlayer != null)
+						server.sendAll(":SR!" + player.getSerNum() + Utilities.padToLength(Integer.toHexString(server.getPlayerCount()), 2) + firstPlayer);
+					
+					/* Need to figure out how this works; player list with random id's seems to always
+					 * get sent first thing, before player even fully connects. Doesn't seem to need to
+					 * contain every single player either, so maybe this works in a way different than
+					 * I originally thought
 					// :SR@I530EBD3F=AD6B1B04,6D3=88358212,AEA=CF388F21,677=949F5923,974=B0C3990F,CDC=FDF066EE,7392C0C1=229BFA5B,8B6=D602C200,69A96075=2DE1BA5B,B6E=EB209805,6A0BB124=2759E719,3EE=C959529B,66C=461FA604,B4A=C81D5804,B66=5D61E2EE,9A1=9F158205,7FD0C147=DFDFCD05,
 					// :SR@I9A1=9F158205,
 					// Send list of online players to me
@@ -80,6 +94,7 @@ public class ClientHandler extends IoHandlerAdapter {
 					// Send my introduction to everyone
 					server.sendAll(":SR@I" + Utilities.stripLeadingZeroes(player.getSerNum()) + "=" + player.getRandHex() + ",");
 					//server.sendAllExcept(player.getSerNum(), ":SR?" + player.getSerNum());
+					 */
 				}
 			}
 		}
@@ -130,6 +145,7 @@ public class ClientHandler extends IoHandlerAdapter {
 			.setReceiveBufferSize(2048);
 		// 2048, 8192
 		server.sendServerMessageTo(session, server.getServerConfig().motd);
+		server.sendTo(session, ":SR@I" + server.getIntroPacket());
 		server.sendServerRules(session);
 		session.setIdleTime(IdleStatus.BOTH_IDLE, 10);
 	}

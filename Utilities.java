@@ -161,6 +161,13 @@ public class Utilities {
 		return s;
 	}
 	
+	public static String padToLength(String s, int len) {
+		while (s.length() < len) {
+			s = "0" + s;
+		}
+		return s;
+	}
+	
 	public static int getGameID(String game) {
 		if (game.equals("WoS"))
 			return 0;
