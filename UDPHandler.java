@@ -83,11 +83,9 @@ public class UDPHandler extends IoHandlerAdapter {
 		// QCA1,CD5,C9C,8E2,9A6,B12,CD4,<byte 00>
 		// List of online players>
 		
-		
 		// A player sent us their info
 		if (msg.substring(0,1).equals("P")) {
 			Player newPlayer = new Player();
-			newPlayer.initRandHex();
 			String[] params = msg.substring(1,msg.length()).trim().split(",");
 			for (String p : params) {
 				String[] temp = p.split("=");
@@ -108,8 +106,10 @@ public class UDPHandler extends IoHandlerAdapter {
 					newPlayer.setEmail(val);
 				else if (field.startsWith("loc"))
 					newPlayer.setLoc(val);
-				else if (field.startsWith("sernum"))
+				else if (field.startsWith("sernum")) {
 					newPlayer.setSerNum(val);
+					Utilities.IPList.put(val, Utilities.encodedIPAddress(session.getRemoteAddress().toString()));
+				}
 				else if (field.startsWith("HHMM"))
 					newPlayer.setAge(val);
 				else if (field.startsWith("d"))

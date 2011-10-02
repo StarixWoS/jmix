@@ -15,7 +15,6 @@ public class Player implements Serializable {
 	private IoSession m_session;
 	
 	private int numP = 1;
-	private String randHex = "FFFFFFFF";
 	
 	private String m_whisperSerNum = "";
 	
@@ -117,17 +116,5 @@ public class Player implements Serializable {
 
 	public String getWhisperSerNum() {
 		return m_whisperSerNum;
-	}
-	
-	public boolean isRandHex() {
-		return randHex.equals("FFFFFFFF") ? false : true;
-	}
-	
-	public void initRandHex() {
-		randHex = Long.toHexString((long) Math.random() * Long.decode("0XFFFFFFFF"));
-	}
-	
-	public String getRandHex() {
-		return randHex;
 	}
 }
