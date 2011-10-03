@@ -1,4 +1,5 @@
 import java.io.Serializable;
+import java.util.ArrayList;
 
 import org.apache.mina.common.IoSession;
 
@@ -14,16 +15,59 @@ public class Player implements Serializable {
 	private String m_w;
 	private IoSession m_session;
 	
+	private ArrayList<Player> m_subscribers;
+	private String m_subscribedTo = "";
+	
 	private int numP = 1;
 	
 	private String m_whisperSerNum = "";
 	
+	private boolean m_sendNextToSubscribers = false;
+	
 	public Player() {
-		
+		m_subscribers = new ArrayList<Player>();
 	}
 	
 	public Player(String serNum) {
+		m_subscribers = new ArrayList<Player>();
 		setSerNum(serNum);
+	}
+	
+	public String getSubscribedTo() {
+		return m_subscribedTo;
+	}
+	
+	public void setSubscribedTo(String s) {
+		m_subscribedTo = s;
+	}
+	
+	public void subscribeTo(Player p) {
+		if (!m_subscribers.contains(p))
+			m_subscribers.add(p);
+	}
+	
+	public void unsubscribeFrom(Player p) {
+		while (m_subscribers.contains(p))
+			m_subscribers.remove(p);
+	}
+	
+	public void sendToSubscribers(String s) {
+		m_sendNextToSubscribers = false;
+		try {
+			for (Player p : m_subscribers) {
+				p.getIoSession().write(s);
+			}
+		} catch (NullPointerException e) {
+			m_subscribers = new ArrayList<Player>();
+		}
+	}
+	
+	public void setSendToSubscribers() {
+		m_sendNextToSubscribers = true;
+	}
+	
+	public boolean isSendToSubscribers() {
+		return m_sendNextToSubscribers;
 	}
 	
 	public void setIoSession(IoSession session) {

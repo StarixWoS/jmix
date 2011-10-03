@@ -46,7 +46,10 @@ public class ClientHandler extends IoHandlerAdapter {
 			// Do not let sneaky cheaters send modified SSVs, rules, or server messages directly
 			if (!(msg.startsWith("@M") || msg.startsWith("@V") || msg.startsWith("$"))) {
 				if (player.getWhisperSerNum().equals("")) {
-					server.sendAllExcept(player.getSerNum(), ":SR" + msg);
+					if (player.isSendToSubscribers())
+						player.sendToSubscribers(":SR" + msg);
+					else
+						server.sendAllExcept(player.getSerNum(), ":SR" + msg);
 				}
 				else {
 					server.sendTo(player.getWhisperSerNum(), ":SR" + msg);
@@ -66,9 +69,7 @@ public class ClientHandler extends IoHandlerAdapter {
 					logger.log(Level.WARNING, ":SR? packet serNum too long");
 				} else {
 					player = Utilities.loadPlayerInfo(serNum);
-					if (player.getSerNum() == null) {
-						player.setSerNum(serNum);
-					}
+					player.setSerNum(serNum);
 					session.setAttribute("player", player);
 					player.setIoSession(session);
 					server.addPlayer(player.getSerNum(), player);
@@ -111,30 +112,42 @@ public class ClientHandler extends IoHandlerAdapter {
 		if (session.containsAttribute("player")) {
 			player = (Player) session.getAttribute("player");
 			// 3rd number after mix appears to be some form of player id num used by WoS.. could be which player num you are on server
-			// TODO :MIX001000009A11A sent alot when in camp scenes; followed by soul id of camp owner; perhaps redirection packet for next thing said
+			// :MIX001000009A11A sent alot when in camp scenes; followed by soul id of camp owner; perhaps redirection packet for next thing said
 			// See if a similar packet gets sent when we leave
+			// 0 sends soul id to everyone in the person's camp (contains soul id)
+			// 1 joins someone's camp (contains soul id)
+			// 2 leaves someone's camp (contains 0's)
 			// TODO MIX3 - see if it gets sent on join server("Play Game")
+			// TODO 7 sent all the freakin' time, but very consistent: every 30 seconds
 			// TODO ID 8(quite possibly requesting the var): <worldName>,<catName>,<varName>, ?
 			// TODO 9 - <world name>,<section name>,<variable name>,<string> ?
 			// TODO :SR@V<sernum_that_changed_it><worldName>,<sectionName>,<variableName>,<value> ?
 			
-			// TODO to see what things like mix 3 do, connect to a real server and see if the Well scene stuff gets sent to everyone (or if that is just on this server)
-			if (msg.startsWith(":MIX4")) {
+			if (msg.startsWith("0")) {
+				player.setSendToSubscribers();
+			} else if (msg.startsWith("1")) {
+				server.getPlayer(msg.substring(3,11)).subscribeTo(player);
+				player.setSubscribedTo(msg.substring(3,11));
+			} else if (msg.startsWith("2")) {
+				// Removes the player from someone else's broadcast list
+				server.getPlayer(player.getSubscribedTo()).unsubscribeFrom(player);
+				player.setSubscribedTo("");
+			} else if (msg.startsWith("4")) {
 				// Next packet goes to the specified soul id
-				player.setWhisperSerNum(msg.substring(7, 15));
-			} else if (msg.startsWith(":MIX5")) {
+				player.setWhisperSerNum(msg.substring(3, 11));
+			} else if (msg.startsWith("5")) {
 				// This is a comment - :MIX501000009A1(Whoj): hi33
-				logger.log(Level.INFO, "Comment: " + msg.substring(15));
+				logger.log(Level.INFO, "Comment: " + msg.substring(11));
 				// Message from admin to player - :SR@M<message from server/admin> 
 				server.sendServerMessageTo(player.getSerNum(), "You're such a big noob.");
-			} else if (msg.startsWith(":MIX6")) {
+			} else if (msg.startsWith("6")) {
 				// This is an admin cmd - :MIX601000009A1123 msg 1234 hiF8
 				// pass cmd target/all msg
-				String[] admincmd = msg.substring(15).substring(0, msg.length() - 17).split(" ");
+				String[] admincmd = msg.substring(10).substring(0, msg.length() - 12).split(" ");
 				logger.log(Level.INFO, "[ADMIN]pass=" + admincmd[0] + " cmd=" + admincmd[1] + " target=" + admincmd[2] + " msg=" + admincmd[3]);
-			} else if (msg.startsWith(":MIX8")) {
+			} else if (msg.startsWith("8")) {
 				server.sendTo(player.getSerNum(), Utilities.getSSV("world", "cat", "var"));
-			} else if (msg.startsWith(":MIX9")) {
+			} else if (msg.startsWith("9")) {
 				Utilities.setSSV("world", "cat", "var", "hi");
 			}
 		}

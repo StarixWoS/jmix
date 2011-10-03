@@ -136,7 +136,6 @@ public class Utilities {
 	
 	public static String encodedIPAddress(String ip) {
 		String[] ipBytes;
-		System.out.println(ip);
 		ip = ip.substring(1, ip.indexOf(":"));
 		ipBytes = ip.split("[.]");
 		int[] ipAddr = new int[4];
