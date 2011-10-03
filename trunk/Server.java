@@ -297,6 +297,10 @@ public class Server implements Runnable {
 		playerList.remove(serNum);
 	}
 	
+	public Player getPlayer(String serNum) {
+		return playerList.get(serNum);
+	}
+	
 	/**
 	 * Send msg to all serNum entries in playerList
 	 * @param msg
