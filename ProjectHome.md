@@ -1,0 +1,1 @@
+JMIX is an open source, cross-platform implementation of the MIX Server used by a number of Synthetic-Reality games.
